@@ -1,0 +1,53 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+from scipy.optimize import curve_fit
+
+def linearFunc(x, intercept, slope):
+    y = intercept + slope * x
+    return y
+
+base_datadir = "data"
+
+exp_data = pd.read_csv(os.path.join(base_datadir, "center_exp.csv"))
+center_data = []
+concentrations = np.arange(0, 1.01, 0.05)
+
+data, errors = [], []
+
+for c in concentrations:
+    datadir = os.path.join(base_datadir, f"{c:.2f}")
+    datafiles = [f for f in os.listdir(datadir) if f.endswith(".csv")]
+    values = []
+    for file in datafiles:
+        values.append(pd.read_csv(os.path.join(datadir, file))["center"])
+    data.append(np.mean(values))
+    errors.append(np.std(values))
+
+fig, ax = plt.subplots(figsize=(8, 9))
+
+(inter, slope), cov = curve_fit(linearFunc, concentrations, data)
+(inter_exp, slope_exp), cov_exp = curve_fit(linearFunc, exp_data["concentration"], exp_data["center"])
+inter_error = np.sqrt(cov[0][0])
+slope_error = np.sqrt(cov[1][1])
+inter_error_exp = np.sqrt(cov_exp[0][0])
+slope_error_exp = np.sqrt(cov_exp[1][1])
+
+yfit = inter + slope*concentrations
+yfit_exp = inter_exp + slope_exp*exp_data["concentration"]
+
+ax.errorbar(concentrations, data, yerr=errors, color="b", label="ML", ls="", marker="o")
+ax.plot(concentrations, yfit, label=f"Slope: {slope:3.1f}" , linestyle="--", color="b")
+ax.scatter(exp_data["concentration"], exp_data["center"], color="r", label="Experimental")
+ax.plot(exp_data["concentration"], yfit_exp, label=f"Slope: {slope_exp:3.1f}", linestyle="--", color="r")
+
+ax.legend(fontsize=20)
+ax.grid("on")
+ax.xaxis.set_tick_params(labelsize=20)
+ax.yaxis.set_tick_params(labelsize=20)
+ax.set_xlabel("C13 concentration", fontsize=25)
+ax.set_ylabel("G peak position (cm-1)", fontsize=25)
+
+plt.tight_layout()
+plt.show()

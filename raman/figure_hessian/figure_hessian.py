@@ -160,5 +160,5 @@ for ax in [ax1, ax2, ax3, ax4, ax5, ax6]:
 
 plt.tight_layout()
 
-# plt.show()
-plt.savefig("hessian_scaling.pdf")
+plt.show()
+# plt.savefig("hessian_scaling.pdf")
